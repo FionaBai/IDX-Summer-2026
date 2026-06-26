@@ -1,0 +1,14 @@
+# Node
+node_modules/
+
+# Environment variables
+.env
+
+# macOS
+.DS_Store
+
+# VSCode
+.vscode/
+
+# Logs
+*.log
