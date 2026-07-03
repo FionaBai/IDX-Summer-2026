@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 
 const healthRoutes = require("./routes/healthRoutes");
+const propertyRoutes = require("./routes/propertyRoutes");
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api", healthRoutes);
+app.use("/api/properties", propertyRoutes);
 
 const PORT = process.env.PORT || 5000;
 
