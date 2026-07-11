@@ -39,6 +39,45 @@ function parseNonNegativeInt(value, fieldName) {
   return num;
 }
 
+function validateListingId(rawId) {
+  if (typeof rawId !== "string") {
+    return {
+      valid: false,
+      message: "Listing ID must be a string",
+    };
+  }
+
+  const id = rawId.trim();
+
+  if (id.length === 0) {
+    return {
+      valid: false,
+      message: "Listing ID cannot be empty",
+    };
+  }
+
+  if (id.length > 255) {
+    return {
+      valid: false,
+      message: "Listing ID cannot exceed 255 characters",
+    };
+  }
+
+  // Allows common listing-ID characters while rejecting malformed input.
+  if (!/^[A-Za-z0-9._-]+$/.test(id)) {
+    return {
+      valid: false,
+      message:
+        "Listing ID may contain only letters, numbers, periods, underscores, and hyphens",
+    };
+  }
+
+  return {
+    valid: true,
+    value: id,
+  };
+}
+
 router.get("/", async (req, res) => {
   try {
     const {
@@ -144,6 +183,97 @@ router.get("/", async (req, res) => {
 
     res.status(500).json({
       error: "Internal server error",
+    });
+  }
+});
+
+
+router.get("/:id/openhouses", async (req, res) => {
+  const validation = validateListingId(req.params.id);
+
+  if (!validation.valid) {
+    return res.status(400).json({
+      error: validation.message,
+    });
+  }
+
+  const listingId = validation.value;
+
+  try {
+    // First verify that the property exists.
+    const [propertyRows] = await pool.query(
+      `
+        SELECT L_ListingID
+        FROM rets_property
+        WHERE L_ListingID = ?
+        LIMIT 1
+      `,
+      [listingId]
+    );
+
+    if (propertyRows.length === 0) {
+      return res.status(404).json({
+        error: `Property with listing ID "${listingId}" was not found`,
+      });
+    }
+
+    const [openHouseRows] = await pool.query(
+      `
+        SELECT *
+        FROM rets_openhouse
+        WHERE L_ListingID = ?
+        ORDER BY OpenHouseDate ASC, OH_StartTime ASC
+      `,
+      [listingId]
+    );
+
+    return res.status(200).json(openHouseRows);
+  } catch (error) {
+    console.error(
+      `Failed to retrieve open houses for listing ${listingId}:`,
+      error
+    );
+
+    return res.status(500).json({
+      error: "Unable to retrieve open houses due to a server error",
+    });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  const validation = validateListingId(req.params.id);
+
+  if (!validation.valid) {
+    return res.status(400).json({
+      error: validation.message,
+    });
+  }
+
+  const listingId = validation.value;
+
+  try {
+    const [rows] = await pool.query(
+      `
+        SELECT *
+        FROM rets_property
+        WHERE L_ListingID = ?
+        LIMIT 1
+      `,
+      [listingId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        error: `Property with listing ID "${listingId}" was not found`,
+      });
+    }
+
+    return res.status(200).json(rows[0]);
+  } catch (error) {
+    console.error(`Failed to retrieve property ${listingId}:`, error);
+
+    return res.status(500).json({
+      error: "Unable to retrieve the property due to a server error",
     });
   }
 });

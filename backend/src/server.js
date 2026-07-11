@@ -5,11 +5,13 @@ const cors = require("cors");
 
 const healthRoutes = require("./routes/healthRoutes");
 const propertyRoutes = require("./routes/propertyRoutes");
+const requestLogger = require("./middleware/requestLogger");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(requestLogger);
 
 app.use("/api", healthRoutes);
 app.use("/api/properties", propertyRoutes);
