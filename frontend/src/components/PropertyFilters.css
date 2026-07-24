@@ -1,0 +1,64 @@
+.property-filters {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e4e7ec;
+  border-radius: 14px;
+}
+
+.property-filters__grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.property-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.property-filters input,
+.property-filters select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.property-filters input:focus,
+.property-filters select:focus {
+  outline: 2px solid #98a2b3;
+  outline-offset: 1px;
+}
+
+.property-filters__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.property-filters button {
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.property-filters button[type="submit"] {
+  background: #101828;
+  color: #ffffff;
+}
+
+.property-filters button[type="button"] {
+  background: #eaecf0;
+  color: #101828;
+}
+
+.property-filters button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
