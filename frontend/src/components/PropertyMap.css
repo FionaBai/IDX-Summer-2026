@@ -1,0 +1,12 @@
+.property-map {
+  margin-top: 32px;
+}
+
+.property-map iframe {
+  border-radius: 14px;
+}
+
+.property-map__directions {
+  display: inline-block;
+  margin-top: 12px;
+}

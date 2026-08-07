@@ -96,3 +96,35 @@ export async function fetchPropertyDetail(
 
   return handleResponse(response);
 }
+
+export async function fetchPropertyOpenHouses(
+  id,
+  options = {}
+) {
+  if (!id) {
+    throw new Error(
+      "A property listing ID is required."
+    );
+  }
+
+  let response;
+
+  try {
+    response = await fetch(
+      `/api/properties/${encodeURIComponent(id)}/openhouses`,
+      {
+        signal: options.signal,
+      }
+    );
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw error;
+    }
+
+    throw new Error(
+      "Unable to reach the backend server."
+    );
+  }
+
+  return handleResponse(response);
+}

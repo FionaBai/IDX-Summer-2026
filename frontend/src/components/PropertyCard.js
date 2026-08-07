@@ -1,64 +1,6 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import PropertyImageCarousel from "./PropertyImageCarousel";
 import "./PropertyCard.css";
-
-const FALLBACK_IMAGE =
-  "https://placehold.co/600x400?text=No+Property+Photo";
-
-function extractPhotoUrl(photo) {
-  if (typeof photo === "string") {
-    return photo.trim() || null;
-  }
-
-  if (!photo || typeof photo !== "object") {
-    return null;
-  }
-
-  // These cover common shapes used by listing feeds.
-  return (
-    photo.url ||
-    photo.Url ||
-    photo.URL ||
-    photo.uri ||
-    photo.href ||
-    photo.MediaURL ||
-    photo.MediaUrl ||
-    photo.MediaURLLarge ||
-    null
-  );
-}
-
-function getFirstPhotoUrl(rawPhotos) {
-  if (!rawPhotos) {
-    return null;
-  }
-
-  let photos = rawPhotos;
-
-  if (typeof rawPhotos === "string") {
-    const trimmed = rawPhotos.trim();
-
-    if (!trimmed || trimmed === "null") {
-      return null;
-    }
-
-    try {
-      photos = JSON.parse(trimmed);
-    } catch {
-      // Some rows may contain a plain URL rather than JSON.
-      if (/^https?:\/\//i.test(trimmed)) {
-        return trimmed;
-      }
-
-      return null;
-    }
-  }
-
-  if (!Array.isArray(photos) || photos.length === 0) {
-    return null;
-  }
-
-  return extractPhotoUrl(photos[0]);
-}
 
 function formatPrice(price) {
   const numericPrice = Number(price);
@@ -85,26 +27,41 @@ function formatNumber(value) {
 }
 
 function PropertyCard({ property }) {
-  const [imageFailed, setImageFailed] = useState(false);
-
-  const parsedPhotoUrl = getFirstPhotoUrl(property.L_Photos);
-  const imageUrl =
-    imageFailed || !parsedPhotoUrl
-      ? FALLBACK_IMAGE
-      : parsedPhotoUrl;
+  const navigate = useNavigate();
 
   const address =
     property.L_Address ||
     property.L_AddressStreet ||
     "Address unavailable";
 
+  function handleCardClick() {
+    if (!property.L_ListingID) {
+      return;
+    }
+
+    navigate(
+      `/property/${encodeURIComponent(property.L_ListingID)}`
+    );
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleCardClick();
+    }
+  }
+
   return (
-    <article className="property-card">
-      <img
-        className="property-card__image"
-        src={imageUrl}
-        alt={address}
-        onError={() => setImageFailed(true)}
+    <article
+      className="property-card"
+      onClick={handleCardClick}
+      onKeyDown={handleKeyDown}
+      role="link"
+      tabIndex={0}
+    >
+      <PropertyImageCarousel
+        rawPhotos={property.L_Photos}
+        address={address}
       />
 
       <div className="property-card__body">
@@ -124,17 +81,23 @@ function PropertyCard({ property }) {
 
         <div className="property-card__details">
           <span>
-            <strong>{formatNumber(property.L_Keyword2)}</strong>{" "}
+            <strong>
+              {formatNumber(property.L_Keyword2)}
+            </strong>{" "}
             beds
           </span>
 
           <span>
-            <strong>{formatNumber(property.LM_Dec_3)}</strong>{" "}
+            <strong>
+              {formatNumber(property.LM_Dec_3)}
+            </strong>{" "}
             baths
           </span>
 
           <span>
-            <strong>{formatNumber(property.LM_Int2_3)}</strong>{" "}
+            <strong>
+              {formatNumber(property.LM_Int2_3)}
+            </strong>{" "}
             sqft
           </span>
         </div>
