@@ -1,0 +1,22 @@
+.property-sort {
+  display: flex;
+  justify-content: flex-end;
+  align-items: end;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.property-sort label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.property-sort select {
+  min-width: 160px;
+  padding: 9px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: white;
+}

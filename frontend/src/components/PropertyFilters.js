@@ -1,7 +1,6 @@
-import { useState } from "react";
 import "./PropertyFilters.css";
 
-const INITIAL_FILTERS = {
+const EMPTY_FILTERS = {
   city: "",
   zipcode: "",
   minPrice: "",
@@ -10,24 +9,36 @@ const INITIAL_FILTERS = {
   baths: "",
 };
 
-function PropertyFilters({ onSearch, onClear, disabled = false }) {
-  const [filters, setFilters] = useState(INITIAL_FILTERS);
+function PropertyFilters({
+  filters,
+  onFiltersChange,
+  onSearch,
+  onClear,
+  disabled = false,
+}) {
+  const displayedFilters = {
+    ...EMPTY_FILTERS,
+    ...filters,
+  };
 
   function handleChange(event) {
     const { name, value } = event.target;
 
-    setFilters((currentFilters) => ({
-      ...currentFilters,
+    onFiltersChange({
+      ...displayedFilters,
       [name]: value,
-    }));
+    });
   }
 
   function handleSubmit(event) {
     event.preventDefault();
 
     const cleanedFilters = Object.fromEntries(
-      Object.entries(filters).filter(
-        ([, value]) => value !== ""
+      Object.entries(displayedFilters).filter(
+        ([, value]) =>
+          value !== undefined &&
+          value !== null &&
+          value !== ""
       )
     );
 
@@ -35,7 +46,7 @@ function PropertyFilters({ onSearch, onClear, disabled = false }) {
   }
 
   function handleClear() {
-    setFilters(INITIAL_FILTERS);
+    onFiltersChange(EMPTY_FILTERS);
     onClear();
   }
 
@@ -50,7 +61,7 @@ function PropertyFilters({ onSearch, onClear, disabled = false }) {
           <input
             type="text"
             name="city"
-            value={filters.city}
+            value={displayedFilters.city}
             onChange={handleChange}
             placeholder="Napa"
           />
@@ -61,7 +72,7 @@ function PropertyFilters({ onSearch, onClear, disabled = false }) {
           <input
             type="text"
             name="zipcode"
-            value={filters.zipcode}
+            value={displayedFilters.zipcode}
             onChange={handleChange}
             placeholder="94558"
           />
@@ -72,7 +83,7 @@ function PropertyFilters({ onSearch, onClear, disabled = false }) {
           <input
             type="number"
             name="minPrice"
-            value={filters.minPrice}
+            value={displayedFilters.minPrice}
             onChange={handleChange}
             min="0"
             placeholder="300000"
@@ -84,7 +95,7 @@ function PropertyFilters({ onSearch, onClear, disabled = false }) {
           <input
             type="number"
             name="maxPrice"
-            value={filters.maxPrice}
+            value={displayedFilters.maxPrice}
             onChange={handleChange}
             min="0"
             placeholder="800000"
@@ -95,7 +106,7 @@ function PropertyFilters({ onSearch, onClear, disabled = false }) {
           Minimum beds
           <select
             name="beds"
-            value={filters.beds}
+            value={displayedFilters.beds}
             onChange={handleChange}
           >
             <option value="">Any</option>
@@ -111,7 +122,7 @@ function PropertyFilters({ onSearch, onClear, disabled = false }) {
           Minimum baths
           <select
             name="baths"
-            value={filters.baths}
+            value={displayedFilters.baths}
             onChange={handleChange}
           >
             <option value="">Any</option>
@@ -125,8 +136,13 @@ function PropertyFilters({ onSearch, onClear, disabled = false }) {
       </div>
 
       <div className="property-filters__actions">
-        <button type="submit" disabled={disabled}>
-          {disabled ? "Searching..." : "Search"}
+        <button
+          type="submit"
+          disabled={disabled}
+        >
+          {disabled
+            ? "Searching..."
+            : "Search"}
         </button>
 
         <button

@@ -42,24 +42,26 @@ function PropertyImageGallery({ rawPhotos }) {
       }
 
       if (event.key === "ArrowLeft") {
-        previousPhoto();
+        setSelectedIndex((current) =>
+          current === 0
+            ? photos.length - 1
+            : current - 1
+        );
       }
 
       if (event.key === "ArrowRight") {
-        nextPhoto();
+        setSelectedIndex((current) =>
+          current === photos.length - 1
+            ? 0
+            : current + 1
+        );
       }
     }
 
-    window.addEventListener(
-      "keydown",
-      handleKeyDown
-    );
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener(
-        "keydown",
-        handleKeyDown
-      );
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [lightboxOpen, photos.length]);
 

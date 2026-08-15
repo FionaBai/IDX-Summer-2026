@@ -6,19 +6,25 @@ import {
 
 import ListingsPage from "./pages/ListingsPage";
 import PropertyDetailPage from "./pages/PropertyDetailPage";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<ListingsPage />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/"
+            element={<ListingsPage />}
+          />
 
-        <Route
-          path="/property/:id"
-          element={<PropertyDetailPage />}
-        />
-      </Routes>
-    </BrowserRouter>
+          <Route
+            path="/property/:id"
+            element={<PropertyDetailPage />}
+          />
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

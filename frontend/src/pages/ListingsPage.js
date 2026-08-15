@@ -4,61 +4,171 @@ import {
   useState,
 } from "react";
 
+import {
+  useSearchParams,
+} from "react-router-dom";
+
 import { fetchProperties } from "../api/client";
 import Pagination from "../components/Pagination";
 import PropertyCard from "../components/PropertyCard";
 import PropertyFilters from "../components/PropertyFilters";
+import PropertySort from "../components/PropertySort";
 import "./ListingsPage.css";
 
 const DEFAULT_ITEMS_PER_PAGE = 20;
 
 function ListingsPage() {
-  const [properties, setProperties] = useState([]);
-  const [total, setTotal] = useState(0);
+  const [searchParams, setSearchParams] =
+    useSearchParams();
 
-  const [activeFilters, setActiveFilters] =
-    useState({});
+  const [properties, setProperties] =
+    useState([]);
+
+  const [total, setTotal] =
+    useState(0);
 
   const [currentPage, setCurrentPage] =
-    useState(1);
+    useState(
+      Number(searchParams.get("page")) || 1
+    );
 
-  const [itemsPerPage] = useState(
-    DEFAULT_ITEMS_PER_PAGE
-  );
+  const [sortBy, setSortBy] =
+    useState(
+      searchParams.get("sortBy") || ""
+    );
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [sortOrder, setSortOrder] =
+    useState(
+      searchParams.get("sortOrder") || "ASC"
+    );
 
-  const requestControllerRef = useRef(null);
+  const [activeFilters, setActiveFilters] =
+    useState(() => ({
+      ...(searchParams.get("city") && {
+        city: searchParams.get("city"),
+      }),
 
+      ...(searchParams.get("zipcode") && {
+        zipcode: searchParams.get("zipcode"),
+      }),
+
+      ...(searchParams.get("minPrice") && {
+        minPrice: searchParams.get("minPrice"),
+      }),
+
+      ...(searchParams.get("maxPrice") && {
+        maxPrice: searchParams.get("maxPrice"),
+      }),
+
+      ...(searchParams.get("beds") && {
+        beds: searchParams.get("beds"),
+      }),
+
+      ...(searchParams.get("baths") && {
+        baths: searchParams.get("baths"),
+      }),
+    }));
+  
+  const [filterForm, setFilterForm] =
+    useState(() => ({
+      city: searchParams.get("city") || "",
+      zipcode: searchParams.get("zipcode") || "",
+      minPrice: searchParams.get("minPrice") || "",
+      maxPrice: searchParams.get("maxPrice") || "",
+      beds: searchParams.get("beds") || "",
+      baths: searchParams.get("baths") || "",
+    }));
+
+  const [itemsPerPage] =
+    useState(DEFAULT_ITEMS_PER_PAGE);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+  const requestControllerRef =
+    useRef(null);
+
+  // Keep URL synchronized with page/filter/sort state.
   useEffect(() => {
-    const controller = new AbortController();
+    const params = {};
 
-    // Cancel any older request before starting this one.
+    if (currentPage > 1) {
+      params.page =
+        String(currentPage);
+    }
+
+    if (sortBy) {
+      params.sortBy = sortBy;
+      params.sortOrder = sortOrder;
+    }
+
+    Object.entries(activeFilters).forEach(
+      ([key, value]) => {
+        if (
+          value !== undefined &&
+          value !== null &&
+          value !== ""
+        ) {
+          params[key] = String(value);
+        }
+      }
+    );
+
+    setSearchParams(params, {
+      replace: true,
+    });
+  }, [
+    currentPage,
+    sortBy,
+    sortOrder,
+    activeFilters,
+    setSearchParams,
+  ]);
+
+  // Load properties whenever page, filters, or sort change.
+  useEffect(() => {
+    const controller =
+      new AbortController();
+
     if (requestControllerRef.current) {
       requestControllerRef.current.abort();
     }
 
-    requestControllerRef.current = controller;
+    requestControllerRef.current =
+      controller;
 
     async function loadProperties() {
       setLoading(true);
       setError("");
 
       const offset =
-        (currentPage - 1) * itemsPerPage;
+        (currentPage - 1) *
+        itemsPerPage;
 
       try {
-        const data = await fetchProperties(
-          {
-            ...activeFilters,
-            limit: itemsPerPage,
-            offset,
-          },
-          {
-            signal: controller.signal,
-          }
-        );
+        const params = {
+          ...activeFilters,
+          limit: itemsPerPage,
+          offset,
+        };
+
+        if (sortBy) {
+          params.sortBy = sortBy;
+          params.sortOrder =
+            sortOrder;
+        }
+
+        const data =
+          await fetchProperties(
+            params,
+            {
+              signal:
+                controller.signal,
+            }
+          );
 
         setProperties(
           Array.isArray(data.results)
@@ -66,9 +176,14 @@ function ListingsPage() {
             : []
         );
 
-        setTotal(Number(data.total) || 0);
+        setTotal(
+          Number(data.total) || 0
+        );
       } catch (requestError) {
-        if (requestError.name === "AbortError") {
+        if (
+          requestError.name ===
+          "AbortError"
+        ) {
           return;
         }
 
@@ -80,10 +195,9 @@ function ListingsPage() {
             "Unable to load properties."
         );
       } finally {
-        // An older request must not change the loading
-        // state of a newer request.
         if (
-          requestControllerRef.current === controller
+          requestControllerRef.current ===
+          controller
         ) {
           setLoading(false);
         }
@@ -99,16 +213,34 @@ function ListingsPage() {
     activeFilters,
     currentPage,
     itemsPerPage,
+    sortBy,
+    sortOrder,
   ]);
 
   function handleSearch(filters) {
-    // New filters always start from page 1.
     setCurrentPage(1);
+
+    setSortBy("");
+    setSortOrder("ASC");
+
     setActiveFilters(filters);
   }
 
   function handleClear() {
+    const emptyFilters = {
+      city: "",
+      zipcode: "",
+      minPrice: "",
+      maxPrice: "",
+      beds: "",
+      baths: "",
+    };
+
+    setFilterForm(emptyFilters);
+
     setCurrentPage(1);
+    setSortBy("");
+    setSortOrder("ASC");
     setActiveFilters({});
   }
 
@@ -121,36 +253,67 @@ function ListingsPage() {
     });
   }
 
-  const totalPages = Math.ceil(
-    total / itemsPerPage
-  );
+  function handleSortChange({
+    sortBy: newSortBy,
+    sortOrder: newSortOrder,
+  }) {
+    setSortBy(newSortBy);
+    setSortOrder(newSortOrder);
+
+    // Changing sort starts at page 1.
+    setCurrentPage(1);
+  }
+
+  const totalPages =
+    Math.ceil(
+      total / itemsPerPage
+    );
 
   const firstResult =
     total === 0
       ? 0
-      : (currentPage - 1) * itemsPerPage + 1;
+      : (currentPage - 1) *
+          itemsPerPage +
+        1;
 
-  const lastResult = Math.min(
-    currentPage * itemsPerPage,
-    total
-  );
+  const lastResult =
+    Math.min(
+      currentPage *
+        itemsPerPage,
+      total
+    );
 
   return (
     <main className="listings-page">
       <header className="listings-page__header">
         <h1>Property Listings</h1>
 
-        {!loading && !error && total > 0 && (
-          <p>
-            Showing {firstResult}-{lastResult} of{" "}
-            {total} properties
-          </p>
-        )}
+        {!loading &&
+          !error &&
+          total > 0 && (
+            <p>
+              Showing{" "}
+              {firstResult}-
+              {lastResult} of{" "}
+              {total} properties
+            </p>
+          )}
       </header>
 
       <PropertyFilters
+        filters={filterForm}
+        onFiltersChange={setFilterForm}
         onSearch={handleSearch}
         onClear={handleClear}
+        disabled={loading}
+      />
+
+      <PropertySort
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSortChange={
+          handleSortChange
+        }
         disabled={loading}
       />
 
@@ -168,7 +331,9 @@ function ListingsPage() {
           className="status-message status-message--error"
           role="alert"
         >
-          <h2>Could not load properties</h2>
+          <h2>
+            Could not load properties
+          </h2>
           <p>{error}</p>
         </div>
       )}
@@ -177,9 +342,13 @@ function ListingsPage() {
         !error &&
         properties.length === 0 && (
           <div className="status-message">
-            <h2>No properties found</h2>
+            <h2>
+              No properties found
+            </h2>
+
             <p>
-              Try changing or clearing some of your
+              Try changing or
+              clearing some of your
               filters.
             </p>
           </div>
@@ -190,21 +359,31 @@ function ListingsPage() {
         properties.length > 0 && (
           <>
             <section className="property-grid">
-              {properties.map((property) => (
-                <PropertyCard
-                  key={
-                    property.L_ListingID ||
-                    property.id
-                  }
-                  property={property}
-                />
-              ))}
+              {properties.map(
+                (property) => (
+                  <PropertyCard
+                    key={
+                      property.L_ListingID ||
+                      property.id
+                    }
+                    property={
+                      property
+                    }
+                  />
+                )
+              )}
             </section>
 
             <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
+              currentPage={
+                currentPage
+              }
+              totalPages={
+                totalPages
+              }
+              onPageChange={
+                handlePageChange
+              }
             />
           </>
         )}
