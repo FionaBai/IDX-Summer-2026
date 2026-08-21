@@ -1,17 +1,38 @@
+import { useState } from "react";
+
 import {
   fireEvent,
   render,
   screen,
 } from "@testing-library/react";
+
 import PropertyFilters from "./PropertyFilters";
 
-test("renders all six filter inputs", () => {
-  render(
+function TestPropertyFilters({
+  onSearch = jest.fn(),
+  onClear = jest.fn(),
+}) {
+  const [filters, setFilters] = useState({
+    city: "",
+    zipcode: "",
+    minPrice: "",
+    maxPrice: "",
+    beds: "",
+    baths: "",
+  });
+
+  return (
     <PropertyFilters
-      onSearch={jest.fn()}
-      onClear={jest.fn()}
+      filters={filters}
+      onFiltersChange={setFilters}
+      onSearch={onSearch}
+      onClear={onClear}
     />
   );
+}
+
+test("renders all six filter inputs", () => {
+  render(<TestPropertyFilters />);
 
   expect(
     screen.getByLabelText(/city/i)
@@ -42,9 +63,8 @@ test("submits entered filters", () => {
   const onSearch = jest.fn();
 
   render(
-    <PropertyFilters
+    <TestPropertyFilters
       onSearch={onSearch}
-      onClear={jest.fn()}
     />
   );
 
@@ -82,9 +102,8 @@ test("does not submit empty filter values", () => {
   const onSearch = jest.fn();
 
   render(
-    <PropertyFilters
+    <TestPropertyFilters
       onSearch={onSearch}
-      onClear={jest.fn()}
     />
   );
 
@@ -112,8 +131,7 @@ test("clear resets all inputs and calls onClear", () => {
   const onClear = jest.fn();
 
   render(
-    <PropertyFilters
-      onSearch={jest.fn()}
+    <TestPropertyFilters
       onClear={onClear}
     />
   );
@@ -136,6 +154,9 @@ test("clear resets all inputs and calls onClear", () => {
     },
   });
 
+  expect(cityInput).toHaveValue("Napa");
+  expect(bedsSelect).toHaveValue("3");
+
   fireEvent.click(
     screen.getByRole("button", {
       name: /clear filters/i,
@@ -144,5 +165,6 @@ test("clear resets all inputs and calls onClear", () => {
 
   expect(cityInput).toHaveValue("");
   expect(bedsSelect).toHaveValue("");
+
   expect(onClear).toHaveBeenCalledTimes(1);
 });
