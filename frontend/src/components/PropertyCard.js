@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 import PropertyImageCarousel from "./PropertyImageCarousel";
 import "./PropertyCard.css";
 
@@ -105,5 +106,49 @@ function PropertyCard({ property }) {
     </article>
   );
 }
+
+PropertyCard.propTypes = {
+  property: PropTypes.shape({
+    id: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string,
+    ]),
+
+    L_ListingID: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string,
+    ]),
+
+    L_Photos: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.array,
+    ]),
+
+    L_SystemPrice: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string,
+    ]),
+
+    L_Address: PropTypes.string,
+    L_AddressStreet: PropTypes.string,
+    L_City: PropTypes.string,
+    L_State: PropTypes.string,
+
+    L_Keyword2: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string,
+    ]),
+
+    LM_Dec_3: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string,
+    ]),
+
+    LM_Int2_3: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string,
+    ]),
+  }).isRequired,
+};
 
 export default PropertyCard;
